@@ -7,6 +7,7 @@ lazy val akkaVersion = "2.4.11"
 lazy val upickleVersion = "0.4.1"
 lazy val scalatagsVersion = "0.6.1"
 lazy val autowireVersion = "0.2.5"
+lazy val h2Version = "1.4.191"
 
 val nscalaTime = "com.github.nscala-time" %% "nscala-time" % "2.14.0"
 val logback = "ch.qos.logback" % "logback-classic" % "1.1.7"
@@ -108,6 +109,51 @@ lazy val model = project
     libraryDependencies += "com.lihaoyi" %% "fastparse" % "0.4.2"
   )
 
+/*
+sudo su -
+psql postgres
+CREATE DATABASE scaladex
+GRANT ALL PRIVILEGES ON DATABASE "scaladex" to scaladex;
+\c scaladex
+\dt scaladex.*
+*/
+
+lazy val schemaName = "SCALADEX"
+lazy val database = project
+  .settings(commonSettings)
+  .settings(slickCodegenSettings)
+  .settings(
+    scalacOptions -= "-Ywarn-unused-import",
+    libraryDependencies ++= Seq(
+      "com.typesafe.slick" %% "slick"      % "3.1.0",
+      "com.zaxxer"          % "HikariCP"   % "2.5.1",
+      "org.postgresql"      % "postgresql" % "9.4-1201-jdbc41"
+    ),
+    slickCodegenDatabaseUrl      := (flywayUrl in flyway).value,
+    slickCodegenDatabaseUser     := (flywayUser in flyway).value,
+    slickCodegenDatabasePassword := (flywayPassword in flyway).value,
+    slickCodegenDriver           := slick.driver.PostgresDriver,
+    slickCodegenJdbcDriver       := "slick.jdbc.DatabaseUrlDataSource",
+    slickCodegenOutputPackage    := "ch.epfl.scala.index.database.generated",
+    slickCodegenExcludedTables   := Seq("schema_version"),
+    sourceGenerators in Compile  += slickCodegen.taskValue
+  ).dependsOn(flyway)
+
+lazy val flyway = project
+  .settings(commonSettings)
+  .settings(
+    flywaySchemas := Seq(schemaName),
+    flywayLocations := {
+      val dir = (resourceDirectory in Compile).value
+      Seq(s"filesystem:$dir/db/migration")
+    },
+    flywayUrl := s"jdbc:h2:${baseDirectory.value.absolutePath}/.h2data;MODE=PostgreSQL",
+    libraryDependencies ++= Seq(
+      "com.typesafe.slick" %% "slick" % "3.1.1",
+      "com.h2database"      % "h2"    % h2Version
+    )
+  )
+
 lazy val data = project
   .settings(commonSettings)
   .settings(
@@ -128,7 +174,7 @@ lazy val data = project
     javaOptions in reStart += "-Xmx3g"
   )
   .enablePlugins(BuildInfoPlugin)
-  .dependsOn(model)
+  .dependsOn(model, database)
 
 // to publish plugin
 // follow: http://www.scala-sbt.org/0.13/docs/Bintray-For-Plugins.html

@@ -3,6 +3,19 @@
 * a jvm
 * sbt
 * css compiler [`sass`](http://sass-lang.com/install)
+* postgresql (production environment only)
+
+## Configuring Postgresql
+
+```bash
+sudo su -
+psql postgres
+```
+
+```sql
+CREATE DATABASE scaladex;
+GRANT ALL PRIVILEGES ON DATABASE "scaladex" to scaladex;
+```
 
 ## How to run Scaladex locally:
 
@@ -14,7 +27,11 @@ cd scaladex
 sbt
 ```
 
-do only once to populate the index
+Create the local database:
+
+`flayway/flywayMigrate`
+
+Do only once to populate the index:
 
 `data/reStart elastic`
 

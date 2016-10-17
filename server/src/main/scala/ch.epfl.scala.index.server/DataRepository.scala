@@ -144,6 +144,7 @@ class DataRepository(github: Github)(private implicit val ec: ExecutionContext) 
   def find(params: SearchParams): Future[(Pagination, List[Project])] =
     query(getQuery(params), params)
 
+  // TODO: DB
   def releases(project: Project.Reference, artifact: Option[String]): Future[List[Release]] = {
     esClient.execute {
       search
@@ -168,6 +169,7 @@ class DataRepository(github: Github)(private implicit val ec: ExecutionContext) 
     * @param maven
     * @return
     */
+  // TODO: DB
   def maven(maven: MavenReference): Future[Option[Release]] = {
 
     esClient.execute {
@@ -188,6 +190,7 @@ class DataRepository(github: Github)(private implicit val ec: ExecutionContext) 
     }.map(r => r.as[Release].headOption)
   }
 
+  // TODO: DB
   def project(project: Project.Reference): Future[Option[Project]] = {
     esClient.execute {
       search
